@@ -4,3 +4,5 @@
 2. pip install scikit-learn
 3. pip install joblib
 4. pip install matplotlib
+5. pip install xgboost
+
