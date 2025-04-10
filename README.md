@@ -47,10 +47,15 @@ Step 3: Đầu ra GRU
 Step 4: Tối ưu siêu tham số
       Tối ưu hidden_units và learning_rate bằng phương pháp như grid search hoặc random search.
       Kết quả tối ưu được tổng hợp trong bảng kết quả.
+      
 ----------------------------------------------PVsyst------------------------------------------------------
+
 ![image](https://github.com/user-attachments/assets/d880ecea-036c-46ee-ac43-36e794d1fcea)
+
 ![image](https://github.com/user-attachments/assets/9886f7d1-d1b7-4f3c-a142-62ef571fbc5a)
+
 ![image](https://github.com/user-attachments/assets/3040dd90-b749-42fb-8d10-dce640f4e2cb)
+
 ![image](https://github.com/user-attachments/assets/053fd3e5-f480-4f8a-8b85-cf2363e23c86)
 
 https://xbsolar.vn/san-pham/tam-pin-mat-troi-first-solar-fs6440w-fs-6440-fs6440a/
