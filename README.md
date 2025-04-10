@@ -47,6 +47,10 @@ Step 3: Đầu ra GRU
 Step 4: Tối ưu siêu tham số
       Tối ưu hidden_units và learning_rate bằng phương pháp như grid search hoặc random search.
       Kết quả tối ưu được tổng hợp trong bảng kết quả.
+----------------------------------------------PVsyst------------------------------------------------------
+![image](https://github.com/user-attachments/assets/d880ecea-036c-46ee-ac43-36e794d1fcea)
+
+
 
 
 
