@@ -7,6 +7,8 @@
 5. pip install xgboost
 6. pip install seaborn
 7. pip install openpyxl
+8. pip install requests
+9. pip install tensorflow
 
 
 -------------------------------------------Mô hình đề xuất: KPCA–XGB–GRU------------------------------------
