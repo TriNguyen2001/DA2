@@ -1,167 +1,427 @@
-# #-------------------------------------------------------Preprocessing--------------------------------------------
+#--------------------------------------------PRE-PROCESSING------------------------------------------------
+
+#--------------------------------------------xem tổng quát data tuần ------------------------------
 # import pandas as pd
-# import numpy as np
-# import seaborn as sns
 # import matplotlib.pyplot as plt
-# import os
+# import matplotlib.dates as mdates
 
-# from sklearn.preprocessing import MinMaxScaler
-# from sklearn.feature_selection import SelectKBest, f_regression
-# from sklearn.decomposition import KernelPCA
+# # 1. Đọc dữ liệu
+# df = pd.read_excel(r"D:\TriNguyen\242\DA2\visual code\Data\new\observation.xlsx")
 
-# # ------------------------
-# # 1. Đọc , xuất dữ liệu
-# data = pd.read_excel(r"D:\TriNguyen\242\DA2\visual code\Data\example_solar_forecast_input.xlsx")
-# output_dir = r"D:\TriNguyen\242\DA2\visual code\Data"
-# os.makedirs(output_dir, exist_ok=True)  # Tạo thư mục nếu chưa có
+# # 2. Tạo datetime
+# df['Datetime'] = pd.to_datetime({
+#     'year': df['Year'],
+#     'month': df['Month'],
+#     'day': df['Day'],
+#     'hour': df['Hour'],
+#     'minute': df['minute'],
+#     'second': df['second']
+# })
+# df = df.sort_values('Datetime')
+# df.set_index('Datetime', inplace=True)
 
-# # 2. Loại bỏ cột không phải số (như datetime hoặc object)
-# data = data.select_dtypes(include=["number"])
+# # 3. Chọn tuần cần vẽ
+# week_index = 1  # 👈 Tuần thứ 2 (bắt đầu từ 0)
+# week_starts = df.resample('W').first().index
+# start_time = week_starts[week_index]
+# end_time = start_time + pd.Timedelta(days=7)
+# week_df = df[start_time:end_time]
 
-# # 3. Xử lý giá trị thiếu
-# data = data.fillna(data.mean())
+# # 4. Vẽ biểu đồ
+# plt.figure(figsize=(14, 8))
+# plt.plot(week_df.index, week_df['Temperature'], label='Nhiệt độ (°C)', color='red')
+# plt.plot(week_df.index, week_df['Humidity'], label='Độ ẩm (%)', color='blue')
+# plt.plot(week_df.index, week_df['Pressure'], label='Áp suất (hPa)', color='green')
+# plt.plot(week_df.index, week_df['GHI'], label='Bức xạ mặt trời (GHI)', color='orange')
+# plt.plot(week_df.index, week_df['Power (watts)'], label='Công suất phát (W)', color='purple')
 
-# # 4. Đặt X và y
-# y = data["power"]
-# X = data.drop(columns=["power"])
+# # ➕ Thêm ngày/tháng/năm vào tiêu đề
+# start_str = start_time.strftime('%d/%m/%Y')
+# end_str = end_time.strftime('%d/%m/%Y')
+# plt.title(f"Thông số môi trường và công suất phát – Tuần {week_index + 1} ({start_str} - {end_str})")
 
-# # 5. Chuẩn hóa dữ liệu
-# scaler = MinMaxScaler()
-# X_scaled = scaler.fit_transform(X)
-# X_scaled_df = pd.DataFrame(X_scaled, columns=X.columns)
-
-# # ------------------------
-# # 📌 1. Heatmap Pearson toàn bộ
-# cols_to_exclude = ['hour', 'day', 'month']
-# heatmap_data = data.drop(columns=[col for col in cols_to_exclude if col in data.columns])
-
-# plt.figure(figsize=(12, 8))
-# sns.heatmap(heatmap_data.corr(), annot=True, cmap="coolwarm")
-# plt.title("Heatmap Pearson Correlation Matrix")
+# plt.xlabel("Thời gian")
+# plt.ylabel("Giá trị")
+# plt.legend()
+# plt.grid(True)
+# plt.gca().xaxis.set_major_locator(mdates.HourLocator(interval=6))
+# plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d/%m\n%H:%M'))
+# plt.xticks(rotation=45)
 # plt.tight_layout()
+
+# # Lưu biểu đồ
+# plt.savefig(f"week_{week_index + 1}_{start_str.replace('/', '-')}_to_{end_str.replace('/', '-')}.png")
+
 # plt.show()
 
-# # ------------------------
-# # 📌 2. Heatmap giữa power hiện tại và quá khứ (t-1 đến t-24)
-# for lag in range(1, 25):
-#     data[f'power_t-{lag}'] = data['power'].shift(lag)
+# #------------------------------xem tổng quát data tháng ----------------------------
+# import pandas as pd
+# import matplotlib.pyplot as plt
+# import matplotlib.dates as mdates
 
-# data_lagged = data.dropna()
-# power_lags = [f'power_t-{i}' for i in range(1, 25)]
-# corr_lag = data_lagged[power_lags + ['power']].corr()
+# # 1. Đọc dữ liệu
+# df = pd.read_excel("D:\\TriNguyen\\242\\DA2\\visual code\\Data\\new\\Historical Data (t11-t12).xlsx")
 
-# plt.figure(figsize=(14, 5))
-# sns.heatmap(corr_lag[['power']].T, annot=True, cmap="YlGnBu")
-# plt.title("Tương quan giữa công suất hiện tại và quá khứ (t-1 đến t-24)")
-# plt.xlabel("Công suất hiện tại (power)")
-# plt.ylabel("Lùi thời gian")
-# plt.tight_layout()
-# plt.show()
+# # 2. Tạo datetime
+# df['Datetime'] = pd.to_datetime({
+#     'year': df['Year'],
+#     'month': df['Month'],
+#     'day': df['Day'],
+#     'hour': df['Hour'],
+#     'minute': df['minute'],
+#     'second': df['second']
+# })
+# df = df.sort_values('Datetime')
+# df.set_index('Datetime', inplace=True)
 
-# # Tạo danh sách các cột trễ
-# lag_features = [f'power_t-{i}' for i in range(1, 25)]
+# # 3. Lọc dữ liệu theo tháng bạn muốn (VD: tháng 11 năm 2023)
+# target_month = 11
+# target_year = 2024
+# month_df = df[(df.index.month == target_month) & (df.index.year == target_year)]
 
-# # Tạo DataFrame so sánh giữa power hiện tại và quá khứ
-# comparison_df = data_lagged[lag_features + ['power']].copy()
+# # 4. Vẽ biểu đồ
+# plt.figure(figsize=(14, 8))
+# plt.plot(month_df.index, month_df['Temperature'], label='Nhiệt độ (°C)', color='red')
+# plt.plot(month_df.index, month_df['Humidity'], label='Độ ẩm (%)', color='blue')
+# plt.plot(month_df.index, month_df['Pressure'], label='Áp suất (hPa)', color='green')
+# plt.plot(month_df.index, month_df['GHI'], label='Bức xạ mặt trời (GHI)', color='orange')
+# plt.plot(month_df.index, month_df['Power (watts)'], label='Công suất phát (W)', color='purple')
 
-# # Xuất ra file Excel
-# output_path = os.path.join(output_dir, "power_comparison.xlsx")
-# comparison_df.to_excel(output_path, index=False)
+# # Tiêu đề tháng
+# plt.title(f"Thông số môi trường và công suất phát – Tháng {target_month}/{target_year}")
 
-# print("✅ Đã lưu file power__comparison.xlsx để so sánh!")
-
-
-# # ------------------------
-# # 📌 3. F-score - Feature Importance
-# X_filtered = X_scaled_df.drop(columns=[col for col in ['hour', 'day', 'month'] if col in X_scaled_df.columns])
-# f_score_selector = SelectKBest(score_func=f_regression, k='all')
-# f_score_selector.fit(X_filtered, y)
-# f_scores = f_score_selector.scores_
-
-# plt.figure(figsize=(12, 5))
-# sns.barplot(x=X_filtered.columns, y=f_scores, palette='viridis')
-# plt.title("Mức độ quan trọng của đặc trưng (F-score) - loại bỏ hour/day/month")
-# plt.ylabel("F-score")
+# plt.xlabel("Thời gian")
+# plt.ylabel("Giá trị")
+# plt.legend()
+# plt.grid(True)
+# plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=2))
+# plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d/%m'))
 # plt.xticks(rotation=45)
 # plt.tight_layout()
 # plt.show()
 
-# # ------------------------
-# # 📌 4. Giảm chiều bằng Kernel PCA
-# kpca = KernelPCA(n_components=2, kernel='rbf', gamma=0.1)
-# X_kpca = kpca.fit_transform(X_scaled)
+#----------------------------------------nôi suy dữ liêu nếu bị thiếu-----------------------------
 
-# explained_variance = np.var(X_kpca, axis=0)
-# explained_ratio = explained_variance / np.sum(explained_variance)
+# import pandas as pd
+# import numpy as np
+# import matplotlib.pyplot as plt
+# import matplotlib.dates as mdates
+# from sklearn.linear_model import LinearRegression
 
-# print("📊 Đóng góp phương sai của từng thành phần KPCA:", explained_ratio)
+# # 1. Đọc dữ liệu
+# df = pd.read_excel(r"D:\TriNguyen\242\DA2\visual code\Data\new\Historical Data - missing.xlsx")
 
-# plt.figure(figsize=(6, 4))
-# plt.bar(['PC1', 'PC2'], explained_ratio * 100, color='steelblue')
-# plt.title("Đóng góp phương sai các thành phần KPCA")
-# plt.ylabel("Tỷ lệ (%)")
-# plt.grid(True, linestyle='--', alpha=0.5)
+# # 2. Tạo datetime
+# df['Datetime'] = pd.to_datetime({
+#     'year': df['Year'],
+#     'month': df['Month'],
+#     'day': df['Day'],
+#     'hour': df['Hour'],
+#     'minute': df['minute'],
+#     'second': df['second']
+# })
+# df.sort_values('Datetime', inplace=True)
+# df.set_index('Datetime', inplace=True)
+
+# # 3. Nội suy các cột khác theo thời gian
+# for col in ['Temperature', 'Humidity', 'Pressure']:
+#     df[col] = df[col].interpolate(method='time', limit_direction='both')
+
+# # 4. Hồi quy Power từ GHI (chỉ cho những ô bị thiếu Power nhưng có GHI)
+# mask_train_power = df['Power (watts)'].notna() & df['GHI'].notna()
+# mask_predict_power = df['Power (watts)'].isna() & df['GHI'].notna()
+
+# if mask_train_power.sum() > 0:
+#     model = LinearRegression()
+#     model.fit(df.loc[mask_train_power, ['GHI']], df.loc[mask_train_power, 'Power (watts)'])
+#     df.loc[mask_predict_power, 'Power (watts)'] = model.predict(df.loc[mask_predict_power, ['GHI']])
+
+
+# # 5. Hồi quy GHI từ Power (chỉ cho những ô bị thiếu GHI nhưng có Power)
+# mask_train_ghi = df['GHI'].notna() & df['Power (watts)'].notna()
+# mask_predict_ghi = df['GHI'].isna() & df['Power (watts)'].notna()
+
+# if mask_train_ghi.sum() > 0 and mask_predict_ghi.sum() > 0:
+#     model2 = LinearRegression()
+#     model2.fit(df.loc[mask_train_ghi, ['Power (watts)']], df.loc[mask_train_ghi, 'GHI'])
+#     df.loc[mask_predict_ghi, 'GHI'] = model2.predict(df.loc[mask_predict_ghi, ['Power (watts)']])
+
+
+# # 6. Nếu GHI = 0 thì Power = 0 và ngược lại
+# df.loc[df['GHI'] == 0, 'Power (watts)'] = 0
+# df.loc[df['Power (watts)'] == 0, 'GHI'] = 0
+
+# # 7. Kiểm tra lại số giá trị bị thiếu
+# print("\n🔍 Số giá trị bị thiếu sau hồi quy từng ô + xử lý GHI = 0 ↔ Power = 0:")
+# print(df[['GHI', 'Power (watts)']].isna().sum())
+
+# # 8. Xuất ra file Excel
+# output_path = r"D:\TriNguyen\242\DA2\visual code\Data\new\Data_after_regression_with_zero_rule.xlsx"
+# df.to_excel(output_path)
+# print(f"\n✅ Đã lưu dữ liệu sau khi nội suy và áp dụng quy tắc GHI = 0 ↔ Power = 0 tại: {output_path}")
+
+
+
+
+
+
+
+
+# # #-------------------heatmap heatmap Pearson correlation----------
+# import pandas as pd
+# import seaborn as sns
+# import numpy as np
+# import matplotlib.pyplot as plt
+
+# # input 
+# history_df = pd.read_excel(r"D:\TriNguyen\242\DA2\visual code\Data\newest\Historical_data_newest (T11-T5).xlsx")
+
+# # --- Định nghĩa features ---
+# features = ['Temperature', 'Humidity', 'Pressure', 'GHI']
+
+# # === TÍNH MA TRẬN TƯƠNG QUAN ===
+# corr_matrix = history_df[features + ['Power (watts)']].corr(method='pearson')
+
+# # === TẠO MẶT NẠ ĐỂ ẨN TAM GIÁC TRÊN ===
+# mask = np.triu(np.ones_like(corr_matrix, dtype=bool))
+
+# # === VẼ HEATMAP TAM GIÁC DƯỚI ===
+# plt.figure(figsize=(8, 6))
+# sns.heatmap(corr_matrix, mask=mask, annot=True, fmt=".2f", cmap="coolwarm", square=True, vmin=-1, vmax=1)
+# plt.title("Heatmap of Pearson Correlation Matrix")
 # plt.tight_layout()
 # plt.show()
 
 
-# # ------------------------------------------------ TRAINING GRU------------------------------------------------
-# # 📦 Tạo X_final từ lag features và KPCA
-
-
-# # Bước 1: Thêm lại power lag features vì trước đó đã dropna rồi
-# for lag in range(1, 25):
-#     data[f'power_t-{lag}'] = data['power'].shift(lag)
-
-# # Bước 2: Tạo lại data_lagged sau khi có KPCA
-# data_lagged = data.dropna().reset_index(drop=True)
-
-# # Bước 3: Tạo DataFrame từ KPCA
-# kpca_df = pd.DataFrame(X_kpca, columns=["PC1", "PC2"])
-# kpca_df = kpca_df.iloc[-len(data_lagged):].reset_index(drop=True)  # khớp chiều
-
-# # Bước 4: Kết hợp thành X_final
-# lag_features = [f'power_t-{i}' for i in range(1, 25)]
-# X_final = pd.concat([
-#     data_lagged[lag_features].reset_index(drop=True),
-#     kpca_df
-# ], axis=1)
-
-# # Bước 5: Tạo y_final
-# y_final = data_lagged["power"].reset_index(drop=True)
-
-# # Bước 6: Xuất ra file Excel hoặc CSV
-# X_final["target_power"] = y_final
-# output_path_for_GRU = os.path.join(output_dir, "X_final_for_GRU.xlsx")
-# X_final.to_excel(output_path_for_GRU, index=False)
-# print("✅ Xuất file X_final_for_GRU.xlsx thành công!")
 
 
 
 
+##--------------------------------------------------PROCESSING------------------------------------
+
+
+# # #----------------------------gru---------------------------------
+
+# import pandas as pd
+# import numpy as np
+# import matplotlib.pyplot as plt
+# import matplotlib.dates as mdates
+# from keras.models import Sequential
+# from keras.layers import GRU, Dense
+# from sklearn.preprocessing import MinMaxScaler
+# # input 
+# history_df = pd.read_excel(r"D:\TriNguyen\242\DA2\visual code\Data\newest\Historical_data_newest (T11-T5).xlsx")
+
+# nwp_df = pd.read_excel(r"D:\TriNguyen\242\DA2\visual code\Data\newest\NWP (DAY8).xlsx")
+
+# obs_df = pd.read_excel(
+#     r"D:\TriNguyen\242\DA2\visual code\Data\newest\observation(DAY8).xlsx",
+#     skiprows=3,
+#     usecols=[0, 1]
+# )
+
+# obs_df = pd.read_excel(
+#     r"D:\TriNguyen\242\DA2\visual code\Data\newest\observation(DAY8).xlsx",
+#     skiprows=6,
+#     usecols=[0, 1]
+# )
+
+# output_path = r"D:\TriNguyen\242\DA2\visual code\Data\newest\Model1_output.xlsx"
+
+# # === 1. ĐỌC FILE LỊCH SỬ ===
+# # history_df = pd.read_excel(r"D:\TriNguyen\242\DA2\visual code\Data\new\Historical Data (t11-t12).xlsx")
+
+# # Tạo cột datetime
+# history_df['Datetime'] = pd.to_datetime({
+#     'year': history_df['Year'],
+#     'month': history_df['Month'],
+#     'day': history_df['Day'],
+#     'hour': history_df['Hour'],
+#     'minute': history_df['minute'],
+#     'second': history_df['second']
+# })
+# history_df.set_index('Datetime', inplace=True)
+# history_df = history_df.dropna()
+
+# # === 2. SCALE DỮ LIỆU ===
+# features = ['Temperature', 'Humidity', 'Pressure', 'GHI']
+# target = 'Power (watts)'
+
+# scaler_X = MinMaxScaler()
+# scaler_y = MinMaxScaler()
+
+# X_scaled = scaler_X.fit_transform(history_df[features])
+# y_scaled = scaler_y.fit_transform(history_df[[target]])
+
+# # === 3. TẠO SEQUENCE DỮ LIỆU ===
+# def create_sequences(X, y, time_steps=6):
+#     Xs, ys = [], []
+#     for i in range(time_steps, len(X)):
+#         Xs.append(X[i-time_steps:i])
+#         ys.append(y[i])
+#     return np.array(Xs), np.array(ys)
+
+# time_steps = 6
+# X_seq, y_seq = create_sequences(X_scaled, y_scaled)
+
+# # === 4. MÔ HÌNH GRU ===
+# model = Sequential([
+#     GRU(64, input_shape=(X_seq.shape[1], X_seq.shape[2]), return_sequences=False),
+#     Dense(1)
+# ])
+# model.compile(loss='mse', optimizer='adam')
+# model.fit(X_seq, y_seq, epochs=30, batch_size=16, verbose=1)
+
+# # === 5. ĐỌC DỮ LIỆU DỰ BÁO ===
+# # nwp_df = pd.read_excel(r"D:\TriNguyen\242\DA2\visual code\Data\new\NWP.xlsx")
+# nwp_df['Datetime'] = pd.to_datetime({
+#     'year': nwp_df['Year'],
+#     'month': nwp_df['Month'],
+#     'day': nwp_df['Day'],
+#     'hour': nwp_df['Hour'],
+#     'minute': nwp_df['minute'],
+#     'second': nwp_df['second']
+# })
+# nwp_df.set_index('Datetime', inplace=True)
+# nwp_df = nwp_df.dropna()
+
+# # === 6. CHUẨN HÓA DỮ LIỆU DỰ BÁO ===
+# nwp_scaled = scaler_X.transform(nwp_df[features])
+
+# X_forecast = []
+# for i in range(time_steps, len(nwp_scaled)):
+#     X_forecast.append(nwp_scaled[i-time_steps:i])
+# X_forecast = np.array(X_forecast)
+
+# # === 7. DỰ BÁO ===
+# y_pred_scaled = model.predict(X_forecast)
+# y_pred = scaler_y.inverse_transform(y_pred_scaled).flatten()
+# forecast_time = nwp_df.index[time_steps:time_steps + len(y_pred)]
+
+# # === 8. ĐỌC DỮ LIỆU QUAN SÁT THỰC TẾ (CHỈ CẦN MỘT LẦN) ===
+# # obs_df = pd.read_excel(
+# #     r"D:\TriNguyen\242\DA2\visual code\Data\new\observation.xlsx",
+# #     skiprows=3,
+# #     usecols=[0, 1]
+# # )
+# obs_df.columns = ['Datetime', 'Power_observed']
+# obs_df['Datetime'] = pd.to_datetime(obs_df['Datetime'])
+
+# # === 9. ĐỒNG BỘ THỜI GIAN GIỮA FORECAST VÀ OBSERVATION ===
+# # Đọc dữ liệu quan sát
+
+# # obs_df = pd.read_excel(
+# #     r"D:\TriNguyen\242\DA2\visual code\Data\new\observation.xlsx",
+# #     skiprows=6,
+# #     usecols=[0, 1]
+# # )
+# obs_df.columns = ['Datetime', 'Power_observed']
+# obs_df['Datetime'] = pd.to_datetime(obs_df['Datetime'])
+
+# # Loại bỏ giá trị thiếu thời gian (rất quan trọng!)
+# obs_df = obs_df.dropna(subset=['Datetime'])
+# obs_df = obs_df.sort_values('Datetime').reset_index(drop=True)
+
+# # Tạo khung thời gian dự báo
+# forecast_df = pd.DataFrame({'Datetime': forecast_time})
+
+# # Ghép dự báo với quan sát thực tế theo thời gian gần nhất trong khoảng 15 phút
+# merged_df = pd.merge_asof(
+#     forecast_df, obs_df,
+#     on='Datetime',
+#     direction='nearest',
+#     tolerance=pd.Timedelta('15min')
+# )
+# merged_df.dropna(subset=['Power_observed'], inplace=True)
+
+# # Cập nhật forecast_time và dữ liệu quan sát thực tế sau khi merge
+# forecast_time = merged_df['Datetime']
+# obs_power = merged_df['Power_observed'].values
+
+# # === 10. XỬ LÝ GHI = 0 VÀ LỌC ÂM ===
+# ghi_forecast = nwp_df['GHI'].values[time_steps:len(forecast_time) + time_steps]
+
+# # Dự báo GRU đã tính rồi, ta cắt theo chiều dài mới của forecast_time
+# y_pred_adjusted = np.where(ghi_forecast == 0, 0, y_pred[:len(forecast_time)])
+# y_pred_adjusted = np.where(y_pred_adjusted < 0, 0, y_pred_adjusted)
+
+# obs_power_adjusted = np.where(ghi_forecast == 0, 0, obs_power)
+# obs_power_adjusted = np.where(obs_power_adjusted < 0, 0, obs_power_adjusted)
+
+
+# # # Vẽ biểu đồ
+
+
+# # === 11. XUẤT FILE KẾT QUẢ ===
+# result_df = nwp_df.iloc[time_steps:].copy().reset_index()
+# result_df['Month'] = result_df['Datetime'].dt.month
+# result_df['Day'] = result_df['Datetime'].dt.day
+# result_df['Hour'] = result_df['Datetime'].dt.hour
+# result_df['minute'] = result_df['Datetime'].dt.minute
+# result_df['second'] = result_df['Datetime'].dt.second
+# result_df['Power (watts)'] = y_pred_adjusted
+
+# final_df = result_df[['Month', 'Day', 'Hour', 'minute', 'second',
+#                       'Temperature', 'Humidity', 'Pressure', 'GHI', 'Power (watts)']]
+
+# # output_path = r"D:\TriNguyen\242\DA2\visual code\Data\new\Model1_output.xlsx"
+# final_df.to_excel(output_path, index=False, sheet_name="Model 1")
+# print(f"✅ Đã xuất kết quả ra file: {output_path}")
 
 
 
 
-# #---------------------------------------------------new-----------------------------------------------------------
 
+
+
+
+
+# #--------------------------LSTM--------------------------------
 
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 from keras.models import Sequential
-from keras.layers import GRU, Dense
+from keras.layers import LSTM, Dense
 from sklearn.preprocessing import MinMaxScaler
+# input 
+history_df = pd.read_excel(r"D:\TriNguyen\242\DA2\visual code\Data\newest\Historical_data_newest (T11-T5).xlsx")
+
+nwp_df = pd.read_excel(r"D:\TriNguyen\242\DA2\visual code\Data\newest\NWP (DAY8).xlsx")
+
+obs_df = pd.read_excel(
+    r"D:\TriNguyen\242\DA2\visual code\Data\newest\observation(DAY8).xlsx",
+    skiprows=3,
+    usecols=[0, 1]
+)
+
+obs_df = pd.read_excel(
+    r"D:\TriNguyen\242\DA2\visual code\Data\newest\observation(DAY8).xlsx",
+    skiprows=6,
+    usecols=[0, 1]
+)
+
+output_path = r"D:\TriNguyen\242\DA2\visual code\Data\newest\Model2_output.xlsx"
 
 # === 1. ĐỌC FILE LỊCH SỬ ===
-history_df = pd.read_excel(r"D:\TriNguyen\242\DA2\visual code\Data\History_power_and_rad.xlsx")
-history_df['Datetime'] = pd.to_datetime(history_df['Datetime'])
+# history_df = pd.read_excel(r"D:\TriNguyen\242\DA2\visual code\Data\new\Historical Data (t11-t12).xlsx")
+
+# Tạo cột datetime
+history_df['Datetime'] = pd.to_datetime({
+    'year': history_df['Year'],
+    'month': history_df['Month'],
+    'day': history_df['Day'],
+    'hour': history_df['Hour'],
+    'minute': history_df['minute'],
+    'second': history_df['second']
+})
 history_df.set_index('Datetime', inplace=True)
 history_df = history_df.dropna()
 
-# === 2. TIỀN XỬ LÝ + SCALE ===
-features = ['Temp', 'Hum', 'Wind', 'Rad']
-target = 'Power'
+# === 2. SCALE DỮ LIỆU ===
+features = ['Temperature', 'Humidity', 'Pressure', 'GHI']
+target = 'Power (watts)'
 
 scaler_X = MinMaxScaler()
 scaler_y = MinMaxScaler()
@@ -169,7 +429,7 @@ scaler_y = MinMaxScaler()
 X_scaled = scaler_X.fit_transform(history_df[features])
 y_scaled = scaler_y.fit_transform(history_df[[target]])
 
-# === 3. TẠO DỮ LIỆU THEO SEQ (ví dụ: 6 bước quá khứ) ===
+# === 3. TẠO SEQUENCE DỮ LIỆU ===
 def create_sequences(X, y, time_steps=6):
     Xs, ys = [], []
     for i in range(time_steps, len(X)):
@@ -177,50 +437,237 @@ def create_sequences(X, y, time_steps=6):
         ys.append(y[i])
     return np.array(Xs), np.array(ys)
 
+time_steps = 6
 X_seq, y_seq = create_sequences(X_scaled, y_scaled)
 
-# === 4. TẠO VÀ HUẤN LUYỆN MÔ HÌNH GRU ===
+# === 4. MÔ HÌNH LSTM ===
 model = Sequential([
-    GRU(64, input_shape=(X_seq.shape[1], X_seq.shape[2]), return_sequences=False),
+    LSTM(64, input_shape=(X_seq.shape[1], X_seq.shape[2]), return_sequences=False),
     Dense(1)
 ])
 model.compile(loss='mse', optimizer='adam')
-model.fit(X_seq, y_seq, epochs=20, batch_size=32, verbose=1)
+model.fit(X_seq, y_seq, epochs=10, batch_size=16, verbose=1)
 
-
-
-
-# === 5. ĐỌC FILE DỰ BÁO THỜI TIẾT ===
-nwp_df = pd.read_excel(r"D:\TriNguyen\242\DA2\visual code\Data\NWP.xlsx")
-nwp_df['Datetime'] = pd.to_datetime(nwp_df['Datetime'])
+# === 5. ĐỌC DỮ LIỆU DỰ BÁO ===
+# nwp_df = pd.read_excel(r"D:\TriNguyen\242\DA2\visual code\Data\new\NWP.xlsx")
+nwp_df['Datetime'] = pd.to_datetime({
+    'year': nwp_df['Year'],
+    'month': nwp_df['Month'],
+    'day': nwp_df['Day'],
+    'hour': nwp_df['Hour'],
+    'minute': nwp_df['minute'],
+    'second': nwp_df['second']
+})
 nwp_df.set_index('Datetime', inplace=True)
 nwp_df = nwp_df.dropna()
 
-# === 6. CHUẨN HÓA INPUT DỰ BÁO ===
+# === 6. CHUẨN HÓA DỮ LIỆU DỰ BÁO ===
 nwp_scaled = scaler_X.transform(nwp_df[features])
 
-# Tạo chuỗi input (dùng chính data dự báo 6 bước gần nhất)
-time_steps = 6
 X_forecast = []
-
 for i in range(time_steps, len(nwp_scaled)):
     X_forecast.append(nwp_scaled[i-time_steps:i])
-
 X_forecast = np.array(X_forecast)
 
-# === 7. DỰ BÁO VÀ INVERSE SCALE ===
+# === 7. DỰ BÁO ===
 y_pred_scaled = model.predict(X_forecast)
-y_pred = scaler_y.inverse_transform(y_pred_scaled)
+y_pred = scaler_y.inverse_transform(y_pred_scaled).flatten()
+forecast_time = nwp_df.index[time_steps:time_steps + len(y_pred)]
 
-# === 8. VẼ BIỂU ĐỒ ===
-forecast_time = nwp_df.index[time_steps:]
+# === 8. ĐỌC DỮ LIỆU QUAN SÁT THỰC TẾ (CHỈ CẦN MỘT LẦN) ===
+# obs_df = pd.read_excel(
+#     r"D:\TriNguyen\242\DA2\visual code\Data\new\observation.xlsx",
+#     skiprows=3,
+#     usecols=[0, 1]
+# )
+obs_df.columns = ['Datetime', 'Power_observed']
+obs_df['Datetime'] = pd.to_datetime(obs_df['Datetime'])
 
-plt.figure(figsize=(12, 5))
-plt.plot(forecast_time, y_pred, label="Dự đoán công suất GRU", color='orange')
-plt.title("Dự báo công suất từ dữ liệu dự báo thời tiết (GRU)")
-plt.xlabel("Thời gian")
-plt.ylabel("Công suất (W)")
-plt.grid(True)
-plt.legend()
-plt.tight_layout()
-plt.show()
+# === 9. ĐỒNG BỘ THỜI GIAN GIỮA FORECAST VÀ OBSERVATION ===
+# Đọc dữ liệu quan sát
+
+# obs_df = pd.read_excel(
+#     r"D:\TriNguyen\242\DA2\visual code\Data\new\observation.xlsx",
+#     skiprows=6,
+#     usecols=[0, 1]
+# )
+obs_df.columns = ['Datetime', 'Power_observed']
+obs_df['Datetime'] = pd.to_datetime(obs_df['Datetime'])
+
+# Loại bỏ giá trị thiếu thời gian (rất quan trọng!)
+obs_df = obs_df.dropna(subset=['Datetime'])
+obs_df = obs_df.sort_values('Datetime').reset_index(drop=True)
+
+# Tạo khung thời gian dự báo
+forecast_df = pd.DataFrame({'Datetime': forecast_time})
+
+# Ghép dự báo với quan sát thực tế theo thời gian gần nhất trong khoảng 15 phút
+merged_df = pd.merge_asof(
+    forecast_df, obs_df,
+    on='Datetime',
+    direction='nearest',
+    tolerance=pd.Timedelta('15min')
+)
+merged_df.dropna(subset=['Power_observed'], inplace=True)
+
+# Cập nhật forecast_time và dữ liệu quan sát thực tế sau khi merge
+forecast_time = merged_df['Datetime']
+obs_power = merged_df['Power_observed'].values
+
+# === 10. XỬ LÝ GHI = 0 VÀ LỌC ÂM ===
+ghi_forecast = nwp_df['GHI'].values[time_steps:len(forecast_time) + time_steps]
+
+# Dự báo GRU đã tính rồi, ta cắt theo chiều dài mới của forecast_time
+y_pred_adjusted = np.where(ghi_forecast == 0, 0, y_pred[:len(forecast_time)])
+y_pred_adjusted = np.where(y_pred_adjusted < 0, 0, y_pred_adjusted)
+
+obs_power_adjusted = np.where(ghi_forecast == 0, 0, obs_power)
+obs_power_adjusted = np.where(obs_power_adjusted < 0, 0, obs_power_adjusted)
+
+
+# === 11. XUẤT FILE KẾT QUẢ ===
+result_df = nwp_df.iloc[time_steps:].copy().reset_index()
+result_df['Month'] = result_df['Datetime'].dt.month
+result_df['Day'] = result_df['Datetime'].dt.day
+result_df['Hour'] = result_df['Datetime'].dt.hour
+result_df['minute'] = result_df['Datetime'].dt.minute
+result_df['second'] = result_df['Datetime'].dt.second
+result_df['Power (watts)'] = y_pred_adjusted
+
+final_df = result_df[['Month', 'Day', 'Hour', 'minute', 'second',
+                      'Temperature', 'Humidity', 'Pressure', 'GHI', 'Power (watts)']]
+
+# output_path = r"D:\TriNguyen\242\DA2\visual code\Data\new\Model1_output.xlsx"
+final_df.to_excel(output_path, index=False, sheet_name="Model 1")
+print(f"✅ Đã xuất kết quả ra file: {output_path}")
+
+
+
+
+
+
+
+
+
+
+
+
+#------------------------------VẼ BIỂU ĐỒ----------------------------
+# import pandas as pd
+# import matplotlib.pyplot as plt
+# import matplotlib.dates as mdates
+
+# # Đường dẫn file
+# model1_path = r"D:\TriNguyen\242\DA2\visual code\Data\newest\Model1_output.xlsx"
+# model2_path = r"D:\TriNguyen\242\DA2\visual code\Data\newest\Model2_output.xlsx"
+# obs_path    = r"D:\TriNguyen\242\DA2\visual code\Data\newest\observation(DAY8).xlsx"
+
+# # Đọc model 1
+# df1 = pd.read_excel(model1_path)
+# df1['Datetime'] = pd.to_datetime({
+#     'year': 2025,
+#     'month': df1['Month'],
+#     'day': df1['Day'],
+#     'hour': df1['Hour'],
+#     'minute': df1['minute'],
+#     'second': df1['second']
+# })
+
+# # Đọc model 2
+# df2 = pd.read_excel(model2_path)
+# df2['Datetime'] = pd.to_datetime({
+#     'year': 2025,
+#     'month': df2['Month'],
+#     'day': df2['Day'],
+#     'hour': df2['Hour'],
+#     'minute': df2['minute'],
+#     'second': df2['second']
+# })
+
+# # Đọc quan sát thực tế
+# obs_df = pd.read_excel(obs_path, skiprows=6, usecols=[0, 1])
+# obs_df.columns = ['Datetime', 'Power_observed']
+# obs_df['Datetime'] = pd.to_datetime(obs_df['Datetime'])
+# obs_df = obs_df.dropna(subset=['Datetime', 'Power_observed'])
+
+# # Khớp thời gian gần nhất (tolerance 15 phút)
+# forecast_df = pd.DataFrame({'Datetime': df1['Datetime']})
+# merged_obs = pd.merge_asof(forecast_df, obs_df, on='Datetime', direction='nearest', tolerance=pd.Timedelta('15min'))
+
+# # Vẽ biểu đồ
+# plt.figure(figsize=(12, 6))
+# plt.plot(df1['Datetime'], df1['Power (watts)'], label="Model 1 (GRU)", color='orange')
+# plt.plot(df2['Datetime'], df2['Power (watts)'], label="Model 2 (LSTM)", color='blue')
+# plt.plot(merged_obs['Datetime'], merged_obs['Power_observed'], label="Observed", color='green')
+
+# plt.title("So sánh công suất dự báo giữa các mô hình và quan sát thực tế")
+# plt.xlabel("Thời gian")
+# plt.ylabel("Công suất (W)")
+# plt.legend()
+# plt.grid(True)
+
+# plt.gca().xaxis.set_major_locator(mdates.HourLocator(interval=1))
+# plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+# plt.xticks(rotation=45)
+
+# plt.tight_layout()
+# plt.show()
+
+
+
+
+
+
+##-------------------------------------POST-PROCESSING--------------------------------------
+
+
+
+
+
+# #--------------TÍNH RMSE------------------------
+# from sklearn.metrics import mean_squared_error
+# import numpy as np
+
+# # === 1. TÍNH RMSE ===
+# mse = mean_squared_error(obs_power_adjusted, y_pred_adjusted)
+# rmse = np.sqrt(mse)
+# print(f"📊 RMSE: {rmse:.2f} W")
+
+# # === 2. BIỂU ĐỒ SO SÁNH CÓ GHI RMSE ===
+# plt.figure(figsize=(12, 5))
+# plt.plot(forecast_time, y_pred_adjusted, label="Dự báo GRU", color='orange')
+# plt.plot(forecast_time, obs_power_adjusted, label="Quan sát thực tế", color='green')
+# plt.title(f"So sánh công suất dự báo và thực tế - RMSE: {rmse:.2f} W")
+# plt.xlabel("Thời gian")
+# plt.ylabel("Công suất (W)")
+# plt.legend()
+# plt.grid(True)
+# plt.gca().xaxis.set_major_locator(mdates.HourLocator(interval=1))
+# plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%H'))
+# plt.xticks(rotation=45)
+# plt.tight_layout()
+# plt.show()
+
+# # === 3. BIỂU ĐỒ SAI SỐ THEO THỜI GIAN ===
+# errors = y_pred_adjusted - obs_power_adjusted
+
+# plt.figure(figsize=(12, 4))
+# plt.plot(forecast_time, errors, label="Sai số (dự báo - thực tế)", color='red')
+# plt.axhline(0, linestyle='--', color='gray')
+# plt.title("Biểu đồ sai số dự báo theo thời gian")
+# plt.xlabel("Thời gian")
+# plt.ylabel("Sai số (W)")
+# plt.grid(True)
+# plt.legend()
+# plt.tight_layout()
+# plt.show()
+
+# # === 4. BIỂU ĐỒ PHÂN BỐ SAI SỐ (HISTOGRAM) ===
+# plt.figure(figsize=(6, 4))
+# plt.hist(errors, bins=30, color='purple', edgecolor='black')
+# plt.title("Phân bố sai số giữa dự báo và thực tế")
+# plt.xlabel("Sai số (W)")
+# plt.ylabel("Số lượng")
+# plt.grid(True)
+# plt.tight_layout()
+# plt.show()
